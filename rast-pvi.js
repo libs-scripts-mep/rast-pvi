@@ -9,7 +9,7 @@ class RastPVI {
      * @param {string} startTime atualmente nao utilizado
      */
     static init(serialNumber, Map, event, program = "", startTime = "") {
-        PVI.FWLink.globalDaqMessagesObservers.addString('Rastreamento.Observer', "PVI.DaqScript.DS_Rastreamento.rastreamento")
+        PVI.FWLink.globalDaqMessagesObservers.addString('RastPVI.Observer', "PVI.DaqScript.DS_Rastreamento.rastreamento")
         pvi.runInstructionS("ras.init", ["true", serialNumber, Map.join(";"), event, program, startTime])
     }
 

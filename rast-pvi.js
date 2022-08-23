@@ -100,8 +100,9 @@ class RastPVI {
     /**
      * Aguarda as informacoes do rastreamento serem disponibilizadas no sessionStorage 
      * @param {function} callback função que trata o retorno do rastreamento
+     * @param {number} timeOut tempo que o script aguarda o evento ocorrer
      */
-    static Monitor(callback) {
+    static Monitor(callback, timeOut = 5000) {
         let monitorRast = setInterval(() => {
             try {
 
@@ -137,6 +138,6 @@ class RastPVI {
         let timeoutRast = setTimeout(() => {
             clearInterval(monitorRast)
             callback(false, "Rastreamento demorou para responder")
-        }, 5000)
+        }, timeOut)
     }
 }

@@ -47,6 +47,22 @@ class RastPVI {
         return sucess
     }
 
+    /**
+     * Testa se existe configurado o cracha de um operador, se nao houver, solicita.
+     * @param {function} callback 
+     */
+    static setOperador(callback) {
+        if (PVI.runInstructionS("ras.getuser", []) == "") {
+                PVI.runInstructionS("ras.setuser", [operador])
+                callback(true)
+            } else {
+                callback(false)
+            }
+        } else {
+            callback(true)
+        }
+    }
+
     static setReport(serialNumber, relatorio) {
         pvi.runInstructionS("ras.setreport", [serialNumber, JSON.stringify(relatorio), true])
     }
@@ -149,21 +165,33 @@ class Main {
 
     MaquinaDeEstados(estado) {
         case "IniciaRastreamento":
-            //Inicia o evento de rastreamento com o mapa de eventos, e numero de serie informado.
-            RastPVI.init(serialNumber, this.Map, this.Evt)
+            RastPVI.setOperador((operadorConfigurado)=>{
 
-            //Inicia o monitoramento do retorno do evento iniciado.
-            RastPVI.Monitor((result, message) => {
+                //Verifica se existe cracha configurado
+                if (operadorConfigurado) {
 
-                if (result) {
-                    //se tudo ok na inicialização do rastreamento...
+                    //Inicia o evento de rastreamento com o mapa de eventos, e numero de serie informado.
+                    RastPVI.init(serialNumber, this.Map, this.Evt)
 
-                    //Caso haja gravacao de firmware durante o teste,
-                    //Recomenda-se utilizar o caminho indicado no retorno do rastreamento
-                    //Pois a cada inicio de rastreamento essa informação e atualizada. Isso impede falhas de gravacao.
-                    sessionStorage.setItem("Firmware", message.item.OpInfo.OpProcesses.find(process => process.ID == "TF").Firmware)
-                    `Segue no teste...`
-                } else {
+                    //Inicia o monitoramento do retorno do evento iniciado.
+                    RastPVI.Monitor((result, message) => {
+
+                        if (result) {
+                            //se tudo ok na inicialização do rastreamento...
+
+                            //Caso haja gravacao de firmware durante o teste,
+                            //Recomenda-se utilizar o caminho indicado no retorno do rastreamento
+                            //Pois a cada inicio de rastreamento essa informação e atualizada. Isso impede falhas de gravacao.
+                            sessionStorage.setItem("Firmware", message.item.OpInfo.OpProcesses.find(process => process.ID == "TF").Firmware)
+                            `Segue no teste...`
+                        } else {
+                            //se não...
+                            `Seta as devidas falhas...`
+                            `Segue no teste...`
+                        }
+                    })
+
+                }else{
                     //se não...
                     `Seta as devidas falhas...`
                     `Segue no teste...`

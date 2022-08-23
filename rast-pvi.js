@@ -42,6 +42,28 @@ class RastPVI {
     }
 
     /**
+     * Testa se existe configurado o cracha de um operador, se nao houver, solicita.
+     * @param {function} callback 
+     */
+    static setOperador(callback) {
+
+        if (PVI.runInstructionS("ras.getuser", []) == "") {
+
+            let operador = prompt("Informe o Número do Cracha")
+
+            if (!isNaN(operador) && operador != null) {
+                PVI.runInstructionS("ras.setuser", [operador])
+                callback(true)
+            } else {
+                callback(false)
+            }
+
+        } else {
+            callback(true)
+        }
+    }
+
+    /**
      * Envia um objeto do tipo RelatorioTeste para o ITS - Inova Tracking System
      * @param {number} serialNumber
      * @param {RelatorioTeste} relatorio

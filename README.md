@@ -164,10 +164,6 @@ class Main {
 
         this.RelatorioTeste = new RelatorioTeste()
 
-        //Limpa sujeira de testes anteriores
-        sessionStorage.removeItem("SerialNumber")
-        sessionStorage.removeItem("RastInit")
-        sessionStorage.removeItem("RastEnd")
     }
 
     MaquinaDeEstados(estado) {

@@ -9,6 +9,11 @@ class RastPVI {
      * @param {string} startTime atualmente nao utilizado
      */
     static init(serialNumber, Map, event, program = "", startTime = "") {
+
+        //Remove possível sujeira
+        sessionStorage.removeItem("RastInit")
+        sessionStorage.removeItem("RastEnd")
+
         PVI.FWLink.globalDaqMessagesObservers.addString('RastPVI.Observer', "PVI.DaqScript.DS_Rastreamento.rastreamento")
         pvi.runInstructionS("ras.init", ["true", serialNumber, Map.join(";"), event, program, startTime])
     }
@@ -79,6 +84,10 @@ class RastPVI {
      */
     static end(serialNumber, sucess) {
 
+        //Remove possível sujeira
+        sessionStorage.removeItem("RastInit")
+        sessionStorage.removeItem("RastEnd")
+
         let endTime = ""
         let informationText = ""
 
@@ -134,10 +143,12 @@ class RastPVI {
                 let result = null
                 let message = null
 
-                if (infoEnd == null && infoInit != null) {
+                if (infoInit != null) {
                     result = infoInit[0]
                     message = JSON.parse(infoInit[1])
-                } else if (infoEnd != null && infoInit != null) {
+                }
+
+                if (infoEnd != null) {
                     result = infoEnd[0]
                     message = JSON.parse(infoEnd[1])
                 }

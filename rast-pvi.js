@@ -144,7 +144,7 @@ class RastPVI {
 
                 console.log(result, message)
 
-                if (result) {
+                if (result != null) {
                     clearInterval(monitorRast)
                     clearTimeout(timeoutRast)
                     callback(result, message)
@@ -153,7 +153,7 @@ class RastPVI {
                 }
 
             } catch (error) {
-                console.warn("Evento ainda não ocorreu")
+                console.warn(error)
             }
         }, 500)
 

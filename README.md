@@ -10,6 +10,13 @@ Abra o terminal, e na pasta do script, execute:
 npm i @libs-scripts-mep/rast-pvi
 ```
 
+Após fianlizada a instalação da biblioteca, inclua em seu html:
+
+```html
+	<script src="node_modules/@libs-scripts-mep/rast-pvi/rast-pvi.js"></script>
+	<script src="node_modules/@libs-scripts-mep/rast-pvi/relatorio-teste.js"></script>
+```
+
 ## Desinstalando
 
 Abra o terminal, e na pasta do script, execute:

@@ -103,6 +103,8 @@ class RastPVI {
      */
     static end(serialNumber, sucess) {
 
+        PVI.FWLink.globalDaqMessagesObservers.addString('RastPVI.Observer', "PVI.DaqScript.DS_Rastreamento.rastreamento")
+
         //Remove possível sujeira
         sessionStorage.removeItem("RastInit")
         sessionStorage.removeItem("RastEnd")

@@ -108,6 +108,21 @@ class RastPVI {
         }
 
     }
+    
+    static setSerialCode(callback) {
+
+        let serialCode = prompt("Informe o número de serie do produto.")
+
+        if (serialCode != null) {
+            if (serialCode.match(/[1][0][0][0][0-9]{8}/) != null) {
+                callback(true, serialCode)
+            } else {
+                callback(false)
+            }
+        } else {
+            callback(false)
+        }
+    }
 }
 
 ```

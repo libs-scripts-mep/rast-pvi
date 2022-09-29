@@ -69,6 +69,25 @@ class RastPVI {
     }
 
     /**
+     * Solicita o numero de serie do produto ao operador atraves de um prompt
+     * @param {function} callback função que trata o retorno do numero de serie. 
+     */
+    static setSerialCode(callback) {
+
+        let serialCode = prompt("Informe o número de serie do produto.")
+
+        if (serialCode != null) {
+            if (serialCode.match(/[1][0][0][0][0-9]{8}/) != null) {
+                callback(true, serialCode)
+            } else {
+                callback(false)
+            }
+        } else {
+            callback(false)
+        }
+    }
+    
+    /**
      * Envia um objeto do tipo RelatorioTeste para o ITS - Inova Tracking System
      * @param {number} serialNumber
      * @param {RelatorioTeste} relatorio

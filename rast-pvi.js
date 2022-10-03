@@ -86,7 +86,7 @@ class RastPVI {
             callback(false)
         }
     }
-    
+
     /**
      * Envia um objeto do tipo RelatorioTeste para o ITS - Inova Tracking System
      * @param {number} serialNumber
@@ -101,17 +101,25 @@ class RastPVI {
      * @param {number} serialNumber
      * @param {bool} sucess
      */
-    static end(serialNumber, sucess) {
+    static end(serialNumber, sucess, informationMap = new Map(), endTime = "") {
 
         PVI.FWLink.globalDaqMessagesObservers.addString('RastPVI.Observer', "PVI.DaqScript.DS_Rastreamento.rastreamento")
 
         //Remove possível sujeira
         sessionStorage.removeItem("RastInit")
         sessionStorage.removeItem("RastEnd")
-
-        let endTime = ""
+        
         let informationText = ""
+        let cont = 0
+        informationMap.forEach((valor, chave) => {
+    
+            informationText += `${valor}=${chave}`
 
+            if (cont < informationMap.size) {
+                informationText += "|"
+            }
+            cont++
+        })
         pvi.runInstructionS("ras.end", ["true", serialNumber, sucess, informationText, endTime])
     }
 

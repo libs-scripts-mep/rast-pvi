@@ -70,4 +70,31 @@ class RelatorioTeste {
             'Resultado': resultado
         })
     }
+
+    /**
+     * Ordena alfabeticamente os testes funcionais e de componentes existentes em uma instancia de um RelatorioTeste
+     * @param {RelatorioTeste} relatorio 
+     */
+    static OrdenaRelatorio(relatorio) {
+
+        relatorio.TesteFuncional.sort((a, b) => {
+            if (a.Nome < b.Nome) {
+                return -1
+            }
+            if (a.Nome > b.Nome) {
+                return 1
+            }
+            return 0
+        })
+
+        relatorio.TesteComponentes.sort((a, b) => {
+            if (a.Nome < b.Nome) {
+                return -1
+            }
+            if (a.Nome > b.Nome) {
+                return 1
+            }
+            return 0
+        })
+    }
 }

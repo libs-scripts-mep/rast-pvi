@@ -1,30 +1,121 @@
 class RastPVI {
 
-    /**
-     * Inicia um evento de rastreamento atraves do PVI.
-     * @param {number} serialNumber 
-     * @param {array} Map array de eventos que precisam constar no rastreamento em ordem, Ex: ["PT", "TF"]
-     * @param {string} event indica o evento atual, Ex: "PT" ou "TF".
-     * @param {string} program Atualmente nao utilizado
-     * @param {string} startTime atualmente nao utilizado
-     */
-    static init(serialNumber, Map, event, program = "", startTime = "") {
+    constructor(eventMap, event) {
+        this.SerialNumber = null
 
-        //Remove possível sujeira
-        sessionStorage.removeItem("RastInit")
-        sessionStorage.removeItem("RastEnd")
+        this.InitInfo = null
+        this.EndInfo = null
 
-        PVI.FWLink.globalDaqMessagesObservers.addString('RastPVI.Observer', "PVI.DaqScript.DS_Rastreamento.rastreamento")
-        pvi.runInstructionS("ras.init", ["true", serialNumber, Map.join(";"), event, program, startTime])
+        this.EventMap = eventMap
+        this.Event = event
+    }
+
+    async startObserver() {
+        return new Promise((resolve) => {
+
+            const id = PVI.FWLink.globalDaqMessagesObservers.add((message, param) => {
+
+                if (message.includes(this.SerialNumber)) {
+                    const result = param[0]
+                    const info = JSON.parse(param[1])
+
+                    if (message.includes("init")) {
+                        this.InitInfo = info
+                        PVI.FWLink.globalDaqMessagesObservers.remove(id)
+                        console.log(`Rastreamento Init ${this.SerialNumber}\n`, result, info)
+                        resolve(result)
+                    }
+                    if (message.includes("end")) {
+                        this.EndInfo = info
+                        PVI.FWLink.globalDaqMessagesObservers.remove(id)
+                        console.log(`Rastreamento End ${this.SerialNumber}\n`, result, info)
+                        resolve(result)
+                    }
+                }
+            }, "rastreamento")
+        })
+    }
+
+    async setSerialNumber(serialNumber = null) {
+        if (serialNumber != null && RastUtil.evalSerialNumber(serialNumber)) {
+            this.SerialNumber = serialNumber
+            return
+        } else {
+            return new Promise(async (resolve) => {
+                let number = prompt("Informe o número de serie do produto.")
+
+                if (RastUtil.evalSerialNumber(number)) {
+                    this.SerialNumber = number
+                    resolve()
+                } else {
+                    resolve(this.setSerialNumber())
+                }
+            })
+        }
+    }
+
+    async init(program = "", startTime = "") {
+        pvi.runInstructionS("ras.init", ["true", this.SerialNumber, this.EventMap.join(";"), this.Event, program, startTime])
+        return await this.startObserver()
+    }
+
+    setReport(relatorio) {
+        pvi.runInstructionS("ras.setreport", [this.SerialNumber, JSON.stringify(relatorio), true])
+    }
+
+    async end(sucess, informationMap = new Map(), endTime = "") {
+        let informationText = ""
+        let cont = 0
+
+        informationMap.forEach((valor, chave) => {
+            informationText += `${valor}=${chave}`
+            if (cont < informationMap.size) {
+                informationText += "|"
+            }
+            cont++
+        })
+
+        pvi.runInstructionS("ras.end", ["true", this.SerialNumber, sucess, informationText, endTime])
+        return await this.startObserver()
+    }
+}
+
+class RastUtil {
+
+    static ENABLE = "enabled"
+    static DISABLED = "disabled"
+
+    static setValidations(
+        user = RastUtil.ENABLE,
+        station = RastUtil.ENABLE,
+        map = RastUtil.ENABLE,
+        script = RastUtil.ENABLE) {
+        PVI.runInstructionS("rastreamento.setvalidations", [user, station, map, script])
+    }
+
+    static setOperador() {
+        if (PVI.runInstructionS("ras.getuser", []) == "") {
+
+            let operador = prompt("Informe o Número do Cracha")
+
+            if (!isNaN(operador) && operador != null) {
+                PVI.runInstructionS("ras.setuser", [operador])
+                return true
+            } else {
+                return false
+            }
+
+        } else {
+            return true
+        }
     }
 
     /**
      * Itera sobre um objeto do tipo RelatorioTeste verificando se ha falhas.
      * @param {RelatorioTeste} report
-     * @returns [true] se nenhum registro do relatorio conter falha, [false] se houver.
+     * @returns [true] se nao houver falha, [false] se houver.
      */
     static evalReport(report) {
-
         let sucess = null
 
         if (report.TesteFuncional.length != 0 || report.TesteComponentes.length != 0) {
@@ -36,7 +127,6 @@ class RastPVI {
                     sucess = false
                 }
             })
-
             report.TesteComponentes.forEach((teste) => {
                 if (!teste.Resultado) {
                     sucess = false
@@ -46,160 +136,11 @@ class RastPVI {
         return sucess
     }
 
-    /**
-     * Testa se existe configurado o cracha de um operador, se nao houver, solicita.
-     * @param {function} callback 
-     */
-    static setOperador(callback) {
-
-        if (PVI.runInstructionS("ras.getuser", []) == "") {
-
-            let operador = prompt("Informe o Número do Cracha")
-
-            if (!isNaN(operador) && operador != null) {
-                PVI.runInstructionS("ras.setuser", [operador])
-                callback(true)
-            } else {
-                callback(false)
-            }
-
+    static evalSerialNumber(serialNumber) {
+        if (serialNumber != null && serialNumber.match(/[1][0][0][0][0-9]{8}/) != null) {
+            return true
         } else {
-            callback(true)
+            return false
         }
-    }
-
-    /**
-     * Solicita o numero de serie do produto ao operador atraves de um prompt
-     * @param {function} callback função que trata o retorno do numero de serie. 
-     */
-    static setSerialCode(callback) {
-
-        let serialCode = prompt("Informe o número de serie do produto.")
-
-        if (serialCode != null) {
-            if (serialCode.match(/[1][0][0][0][0-9]{8}/) != null) {
-                callback(true, serialCode)
-            } else {
-                callback(false)
-            }
-        } else {
-            callback(false)
-        }
-    }
-
-    /**
-     * Envia um objeto do tipo RelatorioTeste para o ITS - Inova Tracking System
-     * @param {number} serialNumber
-     * @param {RelatorioTeste} relatorio
-     */
-    static setReport(serialNumber, relatorio) {
-        pvi.runInstructionS("ras.setreport", [serialNumber, JSON.stringify(relatorio), true])
-    }
-
-    /**
-     * Finaliza um evento de rastreamento previamente iniciado.
-     * @param {number} serialNumber
-     * @param {bool} sucess
-     */
-    static end(serialNumber, sucess, informationMap = new Map(), endTime = "") {
-
-        PVI.FWLink.globalDaqMessagesObservers.addString('RastPVI.Observer', "PVI.DaqScript.DS_Rastreamento.rastreamento")
-
-        //Remove possível sujeira
-        sessionStorage.removeItem("RastInit")
-        sessionStorage.removeItem("RastEnd")
-        
-        let informationText = ""
-        let cont = 0
-        informationMap.forEach((valor, chave) => {
-    
-            informationText += `${valor}=${chave}`
-
-            if (cont < informationMap.size) {
-                informationText += "|"
-            }
-            cont++
-        })
-        pvi.runInstructionS("ras.end", ["true", serialNumber, sucess, informationText, endTime])
-    }
-
-    /**
-     * Disponibiliza as informacoes recebidas do rastreamento em um item do sessionStorage.
-     * Metodo invocado em: 
-     * 
-     * Rastreamento.init(){PVI.FWLink.globalDaqMessagesObservers.addString()}
-     * 
-     * @param {string} message 
-     * @param {object} param 
-     */
-    static Observer(message, param) {
-
-        if (message.includes("rastreamento.init")) {
-
-            let ns = message.match(/[1][0]{4}[0-9]{8}/)
-
-            if (sessionStorage.getItem("SerialNumber") == ns) {
-
-                sessionStorage.setItem("RastInit", JSON.stringify(param))
-
-            }
-        }
-
-        if (message.includes("rastreamento.end")) {
-
-            let ns = message.match(/[1][0]{4}[0-9]{8}/)
-
-            if (sessionStorage.getItem("SerialNumber") == ns) {
-
-                sessionStorage.setItem("RastEnd", JSON.stringify(param))
-
-            }
-        }
-    }
-
-    /**
-     * Aguarda as informacoes do rastreamento serem disponibilizadas no sessionStorage 
-     * @param {function} callback função que trata o retorno do rastreamento
-     * @param {number} timeOut tempo que o script aguarda o evento ocorrer
-     */
-    static Monitor(callback, timeOut = 5000) {
-        let monitorRast = setInterval(() => {
-            try {
-
-                let infoInit = JSON.parse(sessionStorage.getItem("RastInit"))
-                let infoEnd = JSON.parse(sessionStorage.getItem("RastEnd"))
-
-                let result = null
-                let message = null
-
-                if (infoInit != null) {
-                    result = infoInit[0]
-                    message = JSON.parse(infoInit[1])
-                }
-
-                if (infoEnd != null) {
-                    result = infoEnd[0]
-                    message = JSON.parse(infoEnd[1])
-                }
-
-                console.log(result, message)
-
-                if (result != null) {
-                    clearInterval(monitorRast)
-                    clearTimeout(timeoutRast)
-                    callback(result, message)
-                } else {
-                    console.warn("Evento ainda não ocorreu")
-                }
-
-            } catch (error) {
-                console.warn(error)
-            }
-        }, 500)
-
-        let timeoutRast = setTimeout(() => {
-            clearInterval(monitorRast)
-            callback(false, "Rastreamento demorou para responder")
-        }, timeOut)
     }
 }

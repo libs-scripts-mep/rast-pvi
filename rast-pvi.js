@@ -48,6 +48,7 @@ class RastPVI {
                     this.SerialNumber = number
                     resolve()
                 } else {
+                    alert("O valor informado não é um número de série!")
                     resolve(this.setSerialNumber())
                 }
             })
@@ -85,29 +86,27 @@ class RastUtil {
     static ENABLE = "enabled"
     static DISABLED = "disabled"
 
-    static setValidations(
-        user = RastUtil.ENABLE,
-        station = RastUtil.ENABLE,
-        map = RastUtil.ENABLE,
-        script = RastUtil.ENABLE) {
+    static setValidations(user = RastUtil.ENABLE, station = RastUtil.ENABLE, map = RastUtil.ENABLE, script = RastUtil.ENABLE) {
         PVI.runInstructionS("rastreamento.setvalidations", [user, station, map, script])
     }
 
-    static setOperador() {
-        if (PVI.runInstructionS("ras.getuser", []) == "") {
+    static async setOperador() {
+        return new Promise((resolve) => {
+            if (PVI.runInstructionS("ras.getuser", []) == "") {
 
-            let operador = prompt("Informe o Número do Cracha")
+                let operador = prompt("Informe o Número do Cracha")
 
-            if (!isNaN(operador) && operador != null) {
-                PVI.runInstructionS("ras.setuser", [operador])
-                return true
+                if (!isNaN(operador) && operador != null) {
+                    PVI.runInstructionS("ras.setuser", [operador])
+                    resolve()
+                } else {
+                    alert("O valor informado não é um número!")
+                    resolve(this.setOperador())
+                }
             } else {
-                return false
+                resolve()
             }
-
-        } else {
-            return true
-        }
+        })
     }
 
     /**

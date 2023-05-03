@@ -56,9 +56,6 @@ class TestScript {
         await this.Rast.setSerialNumber()
         const rastInitSucess = await this.Rast.init()
         if (!rastInitSucess) { throw this.Rast.InitInfo.Message }
-
-        this.RelatorioTeste.AddTesteFuncional("Teste Falha", "Teste Falha", -1, false)
-        this.RelatorioTeste.AddTesteFuncional("Teste Sucesso", "Teste Sucesso", -1, true)
     }
 }
 ```

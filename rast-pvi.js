@@ -55,8 +55,8 @@ class RastPVI {
         }
     }
 
-    async init(program = "", startTime = "") {
-        pvi.runInstructionS("ras.init", ["true", this.SerialNumber, this.EventMap.join(";"), this.Event, program, startTime])
+    async init(fluxControl = false, program = "", startTime = "") {
+        pvi.runInstructionS("ras.init", ["true", this.SerialNumber, this.EventMap.join(";"), this.Event, program, startTime, fluxControl])
         return await this.startObserver()
     }
 

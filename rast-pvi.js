@@ -1,6 +1,6 @@
 class RastPVI {
 
-    constructor(eventMap, event) {
+    constructor(eventMap, event, componentsToEval) {
         this.SerialNumber = null
 
         this.InitInfo = null
@@ -8,6 +8,58 @@ class RastPVI {
 
         this.EventMap = eventMap
         this.Event = event
+
+        sessionStorage.getItem("ExecCount") == null ? sessionStorage.setItem("ExecCount", 0) : null
+
+        if (sessionStorage.getItem("TestComponents") == null) {
+            const responseObj = this.setTestComponents(componentsToEval)
+
+            if (responseObj.sucess) { sessionStorage.setItem("TestComponents", JSON.stringify(responseObj.response)) }
+            else { throw new Error(responseObj.message) }
+        }
+
+        this.TestComponents = JSON.parse(sessionStorage.getItem("TestComponents"))
+    }
+
+    /**
+     * 
+     * @param {object} componentsToEval formato esperado = { Base: { message: "", regex: "", }, ... }
+     * @returns 
+     */
+    setTestComponents(componentsToEval) {
+
+        const nameIndex = 0, objIndex = 1
+        const responseObj = {}
+
+        for (const component of Object.entries(componentsToEval)) {
+
+            const getResult = evalComponent(component[objIndex].regex, component[objIndex].message)
+
+            if (getResult.sucess) {
+                responseObj[component[nameIndex]] = getResult.component
+            } else {
+                return { sucess: false, response: responseObj, message: `${component[nameIndex]} incompatível com o solicitado` }
+            }
+        }
+
+        return { sucess: true, response: responseObj, message: `` }
+
+        function evalComponent(regex, message) {
+            const input = prompt(message)
+
+            if (input != null) {
+                const component = input.match(regex)
+
+                if (component != null) {
+                    return { sucess: true, component: component[0].toUpperCase() }
+                } else {
+                    return { sucess: false, component: null }
+                }
+
+            } else {
+                return { sucess: false, component: input }
+            }
+        }
     }
 
     async startObserver() {
@@ -29,6 +81,7 @@ class RastPVI {
                         this.EndInfo = info
                         PVI.FWLink.globalDaqMessagesObservers.remove(id)
                         console.log(`Rastreamento End ${this.SerialNumber}\n`, result, info)
+                        result ? sessionStorage.setItem("ExecCount", parseInt(sessionStorage.getItem("ExecCount")) + 1) : null
                         resolve(result)
                     }
                 }
@@ -64,16 +117,16 @@ class RastPVI {
         pvi.runInstructionS("ras.setreport", [this.SerialNumber, JSON.stringify(relatorio), true])
     }
 
-    async end(sucess, informationMap = new Map(), endTime = "") {
+    async end(sucess, endTime = "") {
         let informationText = ""
-        let cont = 0
+        let splitterCount = 0
 
-        informationMap.forEach((valor, chave) => {
-            informationText += `${valor}=${chave}`
-            if (cont < informationMap.size) {
-                informationText += "|"
-            }
-            cont++
+        const components = new Map(Object.entries(this.TestComponents))
+
+        components.forEach((value, key) => {
+            informationText += `${key}=${value}`
+            if (splitterCount < components.size) { informationText += "|" }
+            splitterCount++
         })
 
         pvi.runInstructionS("ras.end", ["true", this.SerialNumber, sucess, informationText, endTime])
@@ -83,10 +136,14 @@ class RastPVI {
 
 class RastUtil {
 
-    static ENABLE = "enabled"
+    static ENABLED = "enabled"
     static DISABLED = "disabled"
 
-    static setValidations(user = RastUtil.ENABLE, station = RastUtil.ENABLE, map = RastUtil.ENABLE, script = RastUtil.ENABLE) {
+    static isFirstExec() {
+        return sessionStorage.getItem("ExecCount") == null || sessionStorage.getItem("ExecCount") == 0
+    }
+
+    static setValidations(user, station, map, script) {
         PVI.runInstructionS("rastreamento.setvalidations", [user, station, map, script])
     }
 

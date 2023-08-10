@@ -42,33 +42,45 @@ const rastInitSucess = await this.Rast.init(fluxControl)
 
 ``` js
 class TestScript {
-    constructor() {
+    constructor(eventMap, event) {
 
-        RastUtil.setValidations(RastUtil.ENABLE, RastUtil.ENABLE, RastUtil.ENABLE, RastUtil.DISABLED)
-
-        this.Rast = new RastPVI(['TF'], 'TF')
         this.RelatorioTeste = new RelatorioTeste()
+        this.EventMap = eventMap
+        this.Event = event
 
         this.Run().then(async () => {
 
+            RelatorioTeste.OrdenaRelatorio(this.TestReport)
             this.Rast.setReport(this.RelatorioTeste)
             const rastEndSucess = await this.Rast.end(RastUtil.evalReport(this.RelatorioTeste))
             if (!rastEndSucess) { throw this.Rast.EndInfo.Message }
 
-            UI.finalizaTeste(this.RelatorioTeste)
+            UI.displayReport(this.RelatorioTeste)
 
         }).catch((error) => {
-                this.RelatorioTeste.AddTesteFuncional("Exception", error, -1, false)
-                UI.finalizaTeste(this.RelatorioTeste)
+            this.RelatorioTeste.AddTesteFuncional("Exception", error, -1, false)
+            UI.displayReport(this.RelatorioTeste)
         })
     }
 
     async Run() {
 
         UI.setMsg("Iniciando rastreamento...")
+
+        if(RastUtil.isFirstExec()){
+            //instruções iniciais
+        }
+        
+        RastUtil.setValidations(RastUtil.ENABLED, RastUtil.ENABLED, RastUtil.ENABLED, RastUtil.DISABLED)
+        this.Rast = new RastPVI(this.EventMap, this.Event)
+
+        await RastUtil.setOperador()
         await this.Rast.setSerialNumber()
+
         const rastInitSucess = await this.Rast.init()
-        if (!rastInitSucess) { throw this.Rast.InitInfo.Message }
+        if (!rastInitSucess) { this.TestReport.AddTesteFuncional("Rastreamento Init", this.Rast.InitInfo.Message, -1, false); return }
+        UI.setTitle(this.Rast.InitInfo.item.OpInfo.Product.Name)
+        const finalFirmwarePath = this.Rast.InitInfo.item.OpInfo.OpProcesses.find(process => process.ID == "TF").Firmware
     }
 }
 ```

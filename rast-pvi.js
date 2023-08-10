@@ -143,6 +143,10 @@ class RastUtil {
         return sessionStorage.getItem("ExecCount") == null || sessionStorage.getItem("ExecCount") == 0
     }
 
+    static getExecCount() {
+        return sessionStorage.getItem("ExecCount") == null ? 0 : parseInt(sessionStorage.getItem("ExecCount"))
+    }
+
     static setValidations(user, station, map, script) {
         PVI.runInstructionS("rastreamento.setvalidations", [user, station, map, script])
     }

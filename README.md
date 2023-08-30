@@ -38,6 +38,14 @@ const rastInitSucess = await this.Rast.init(fluxControl)
 
 > o método atribui por default o valor `false` à essa variável, então não se preocupe caso não for utilizar
 
+
+## Crontrole de finalização do rastreamento
+
+Apartir da versão 3.1.0, é possível controlar a finalização do rastremento na inicialização do número de série, adicionando '```**```' no inicio/final inserido no prompt. 
+
+![Image](https://i.imgur.com/ix7xAfM.png)
+
+
 ## Exemplo de Utilização
 
 ``` js

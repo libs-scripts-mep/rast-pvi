@@ -6,6 +6,8 @@ class RastPVI {
         this.InitInfo = null
         this.EndInfo = null
 
+        this.SendTracking = true
+
         this.EventMap = eventMap
         this.Event = event
 
@@ -91,6 +93,10 @@ class RastPVI {
 
     async setSerialNumber(serialNumber = null) {
         if (serialNumber != null && RastUtil.evalSerialNumber(serialNumber)) {
+            if (serialNumber.includes("**")) {
+                serialNumber = serialNumber.replace("**", "")
+                this.SendTracking = false
+            }
             this.SerialNumber = serialNumber
             return
         } else {
@@ -98,6 +104,10 @@ class RastPVI {
                 let number = prompt("Informe o número de serie do produto.")
 
                 if (RastUtil.evalSerialNumber(number)) {
+                    if (number.includes("**")) {
+                        number = number.replace("**", "")
+                        this.SendTracking = false
+                    }
                     this.SerialNumber = number
                     resolve()
                 } else {
@@ -129,8 +139,13 @@ class RastPVI {
             splitterCount++
         })
 
-        pvi.runInstructionS("ras.end", ["true", this.SerialNumber, sucess, informationText, endTime])
-        return await this.startObserver()
+        if (this.SendTracking) {
+            pvi.runInstructionS("ras.end", ["true", this.SerialNumber, sucess, informationText, endTime])
+            return await this.startObserver()
+        } else {
+            alert("O Rastreamento não será finalizado!!")
+            return true
+        }
     }
 }
 

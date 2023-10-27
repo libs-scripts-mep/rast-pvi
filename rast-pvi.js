@@ -218,4 +218,16 @@ class RastUtil {
             return false
         }
     }
+
+    static transferReport(reportsFrom = [], toReport) {
+        for (const report of reportsFrom) {
+
+            for (const test of report.TesteComponentes) {
+                toReport.TesteComponentes.push(test)
+            }
+            for (const test of report.TesteFuncional) {
+                toReport.TesteFuncional.push(test)
+            }
+        }
+    }
 }

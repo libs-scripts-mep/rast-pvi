@@ -45,6 +45,30 @@ Apartir da versão 3.1.0, é possível controlar a finalização do rastremento 
 
 ![Image](https://i.imgur.com/ix7xAfM.png)
 
+## setOperador e setSerialNumber com prompt e alert configuráveis
+
+A partir da versão 3.3.0, é possível utilizar métodos que fazem a função de `prompt` e `alert` sem travar a execução do navegador. Para isto, é necessário passar um objeto como parâmetro, conforme o exemplo:
+
+``` js
+const FunctionObj = {
+    prompt: {
+        Method: UI.prompt,
+        Instance: UI,
+        Parameters: ["Informe o número de série do produto:"]
+    },
+    alert: {
+        Method: UI.alert,
+        Instance: UI,
+        Parameters: ["Número Inválido!"]
+    }
+}
+
+await TS.Rast.setSerialNumber(FunctionObj)
+```
+- Desta forma, é possível passar métodos que estejam em qualquer biblioteca e que tenham n parâmetros;
+- Parâmetros destes métodos devem ser passados dentro de um array na propriedade `Parameters`, pois é utilizado um [apply()](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript/Reference/Global_Objects/Function/apply);
+- Estes métodos devem retornar uma `Promise` (para permitir o uso do `await`);
+- O método prompt deve retornar um objeto contendo as propriedades `result` (true ou false) e `value` (valor digitado).
 
 ## Exemplo de Utilização
 

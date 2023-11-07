@@ -92,29 +92,43 @@ class RastPVI {
     }
 
     async setSerialNumber(serialNumber = null) {
-        if (serialNumber != null && RastUtil.evalSerialNumber(serialNumber)) {
-            if (serialNumber.includes("**")) {
-                serialNumber = serialNumber.replace("**", "")
-                this.SendTracking = false
-            }
-            this.SerialNumber = serialNumber
-            return
-        } else {
-            return new Promise(async (resolve) => {
-                let number = prompt("Informe o número de serie do produto.")
+        if (serialNumber != null && typeof serialNumber == "object") {
+            const Prompt = serialNumber.prompt
+            const Alert = serialNumber.alert
 
-                if (RastUtil.evalSerialNumber(number)) {
-                    if (number.includes("**")) {
-                        number = number.replace("**", "")
-                        this.SendTracking = false
-                    }
-                    this.SerialNumber = number
-                    resolve()
+            const number = await Prompt.Method.apply(Prompt.Instance, Prompt.Parameters)
+            if (number.result) {
+                if (RastUtil.evalSerialNumber(number.value)) {
+                    this.setSerialNumber(number.value)
                 } else {
-                    alert("O valor informado não é um número de série!")
-                    resolve(this.setSerialNumber())
+                    await Alert.Method.apply(Alert.Instance, Alert.Parameters)
+                    return this.setSerialNumber(serialNumber)
                 }
-            })
+            } else {
+                await Alert.Method.apply(Alert.Instance, Alert.Parameters)
+                return this.setSerialNumber(serialNumber)
+            }
+
+        } else {
+            if (serialNumber != null && RastUtil.evalSerialNumber(serialNumber)) {
+                if (serialNumber.includes("**")) {
+                    serialNumber = serialNumber.replace("**", "")
+                    this.SendTracking = false
+                }
+                this.SerialNumber = serialNumber
+                return
+            } else {
+                return new Promise(async (resolve) => {
+                    const number = prompt("Informe o número de serie do produto.")
+
+                    if (RastUtil.evalSerialNumber(number)) {
+                        resolve(this.setSerialNumber(number))
+                    } else {
+                        alert("O valor informado não é um número de série!")
+                        resolve(this.setSerialNumber())
+                    }
+                })
+            }
         }
     }
 
@@ -166,19 +180,44 @@ class RastUtil {
         PVI.runInstructionS("rastreamento.setvalidations", [user, station, map, script])
     }
 
-    static async setOperador() {
-        return new Promise((resolve) => {
+    static async setOperador(Operador = null) {
+        return new Promise(async resolve => {
             if (PVI.runInstructionS("ras.getuser", []) == "") {
+                
+                if (Operador != null && typeof Operador == "object") {
+                    const Prompt = Operador.prompt
+                    const Alert = Operador.alert
 
-                let operador = prompt("Informe o Número do Cracha")
+                    const operador = await Prompt.Method.apply(Prompt.Instance, Prompt.Parameters)
+                    if (operador.result) {
+                        if (this.evalOperador(operador.value)) {
+                            resolve(this.setOperador(operador.value))
+                        } else {
+                            await Alert.Method.apply(Alert.Instance, Alert.Parameters)
+                            resolve(this.setOperador(Operador))
+                        }
+                    } else {
+                        await Alert.Method.apply(Alert.Instance, Alert.Parameters)
+                        resolve(this.setOperador(Operador))
+                    }
 
-                if (!isNaN(operador) && operador != null) {
-                    PVI.runInstructionS("ras.setuser", [operador])
-                    resolve()
                 } else {
-                    alert("O valor informado não é um número!")
-                    resolve(this.setOperador())
+                    if (this.evalOperador(Operador)) {
+                        PVI.runInstructionS("ras.setuser", [Operador])
+                        resolve()
+
+                    } else {
+                        const operador = prompt("Informe o Número do Cracha")
+
+                        if (this.evalOperador(operador)) {
+                            resolve(this.setOperador(operador))
+                        } else {
+                            alert("O valor informado não é um número!")
+                            resolve(this.setOperador())
+                        }
+                    }
                 }
+
             } else {
                 resolve()
             }
@@ -213,6 +252,14 @@ class RastUtil {
 
     static evalSerialNumber(serialNumber) {
         if (serialNumber != null && serialNumber.match(/[1][0][0][0][0-9]{8}/) != null) {
+            return true
+        } else {
+            return false
+        }
+    }
+
+    static evalOperador(operador) {
+        if (!isNaN(operador) && operador != null && operador != "") {
             return true
         } else {
             return false

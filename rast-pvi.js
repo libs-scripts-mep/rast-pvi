@@ -1,5 +1,33 @@
-class RastPVI {
+import FWLink from "../daq-fwlink/FWLink.js"
 
+/**
+ * 
+ * @param {Array} eventMap 
+ * @param {String} event 
+ * @param {Object} componentsToEval
+ * 
+ * # Exemplos
+ * 
+ * ```js
+ * let testComponents = {
+            Base: {
+                name: "BS-80",
+                image: "images/BS-80.png",
+                message: "Informe o código de barras da base:",
+                regex: "(BS|bs)-80.[1-9](\/|;)(REV|rev)[0-9]",
+            },
+            Fixture: {
+                name: "FX-64",
+                image: "images/FX-64.jpeg",
+                message: "Informe o código de barras do fixture:",
+                regex: "(FX|fx)-64.[1-9](\/|;)(REV|rev)[0-9]",
+            }
+        }
+ * 
+ * let rast = new RastPVI(["PT", "TF"], "TF", testComponents)
+ * ```
+ */
+export class RastPVI {
     constructor(eventMap, event, componentsToEval) {
         this.SerialNumber = null
 
@@ -25,7 +53,7 @@ class RastPVI {
 
     /**
      * 
-     * @param {object} componentsToEval formato esperado = { Base: { message: "", regex: "", }, ... }
+     * @param {object} componentsToEval
      * @returns 
      */
     setTestComponents(componentsToEval) {
@@ -64,10 +92,14 @@ class RastPVI {
         }
     }
 
+    /**
+     * Aguarda emissão de evento de rastreamento do PVI
+     * @returns 
+     */
     async startObserver() {
         return new Promise((resolve) => {
 
-            const id = PVI.FWLink.globalDaqMessagesObservers.add((message, param) => {
+            const id = FWLink.PVIEventObserver.add((message, param) => {
 
                 if (message.includes(this.SerialNumber)) {
                     const result = param[0]
@@ -75,13 +107,13 @@ class RastPVI {
 
                     if (message.includes("init")) {
                         this.InitInfo = info
-                        PVI.FWLink.globalDaqMessagesObservers.remove(id)
+                        FWLink.PVIEventObserver.remove(id)
                         console.log(`Rastreamento Init ${this.SerialNumber}\n`, result, info)
                         resolve(result)
                     }
                     if (message.includes("end")) {
                         this.EndInfo = info
-                        PVI.FWLink.globalDaqMessagesObservers.remove(id)
+                        FWLink.PVIEventObserver.remove(id)
                         console.log(`Rastreamento End ${this.SerialNumber}\n`, result, info)
                         result ? sessionStorage.setItem("ExecCount", parseInt(sessionStorage.getItem("ExecCount")) + 1) : null
                         resolve(result)
@@ -132,15 +164,82 @@ class RastPVI {
         }
     }
 
+    /**
+     * 
+     * @param {Boolean} fluxControl Impede que uma peça seja retestada se já tiver erro apontado. Para retestar é necessário um apontamento de conserto, ou se a mesma já possuir apontamento de sucesso, não será retestada sem um apontamento de revisão. Funciona a partir do PVI `4.7.0.0`
+     * @param {String} program 
+     * @param {String} startTime 
+     * @returns Boolean
+     * 
+     * # Exemplos
+     * 
+     * ```js
+     * import { RastPVI, RastUtil } from "../node_modules/@libs-scripts-mep/rast-pvi/rast-pvi.js"
+     * const rastInitSucess = await rast.init(true)
+     * ```
+     * 
+     * ## Algoritmo recomendado
+     * ```js
+     * import { RastPVI, RastUtil } from "../node_modules/@libs-scripts-mep/rast-pvi/rast-pvi.js"
+     * import RelatorioTeste from "../node_modules/@libs-scripts-mep/rast-pvi/relatorio-teste.js"
+     * 
+     * RastUtil.setValidations(RastUtil.ENABLED, RastUtil.ENABLED, RastUtil.ENABLED, RastUtil.DISABLED)
+     * await RastUtil.setOperador()
+     * await rast.setSerialNumber()
+     * const rastInitSucess = await rast.init(true)
+     * if (!rastInitSucess) { tempReport.AddTesteFuncional("Rastreamento Init", rast.InitInfo.Message, -1, false) }
+     * ```
+     * 
+     * ## 💡 Controle de finalização de rastreamento
+     * É possível controlar a finalização do rastremento na inicialização do número de série, adicionando `**` ao inicio/final do número, Ex:
+     * 
+     * ```
+     * 1000001234567** ou **1000001234567
+     * ```
+     */
     async init(fluxControl = false, program = "", startTime = "") {
-        pvi.runInstructionS("ras.init", ["true", this.SerialNumber, this.EventMap.join(";"), this.Event, program, startTime, fluxControl])
+        FWLink.runInstructionS("ras.init", ["true", this.SerialNumber, this.EventMap.join(";"), this.Event, program, startTime, fluxControl])
         return await this.startObserver()
     }
 
+    /**
+     * Relaciona um relatorio de teste com um número de série
+     * @param {RelatorioTeste} relatorio 
+     * @returns 
+     * 
+     * # Exemplos
+     * 
+     * ```js
+     * let myReport = new RelatorioTeste()
+     * let rast = new RastPVI()
+     * rast.setReport(myReport)
+     * ```
+     */
     setReport(relatorio) {
-        pvi.runInstructionS("ras.setreport", [this.SerialNumber, JSON.stringify(relatorio), true])
+        return FWLink.runInstructionS("ras.setreport", [this.SerialNumber, JSON.stringify(relatorio), true]) == 1
     }
 
+    /**
+     * 
+     * @param {Boolean} sucess 
+     * @param {String} endTime 
+     * @returns Boolean
+     * 
+     * # Exemplos
+     * 
+     * ```js
+     * let rast = new RastPVI()
+     * rast.end(true)
+     * ```
+     * 
+     * ## Algoritmo recomendado
+     * ```js
+     * let myReport = new RelatorioTeste()
+     * let rast = new RastPVI()
+     * rast.setReport(myReport)
+     * rast.end(RastUtil.evalReport(myReport))
+     * ```
+     */
     async end(sucess, endTime = "") {
         let informationText = ""
         let splitterCount = 0
@@ -154,7 +253,7 @@ class RastPVI {
         })
 
         if (this.SendTracking) {
-            pvi.runInstructionS("ras.end", ["true", this.SerialNumber, sucess, informationText, endTime])
+            FWLink.runInstructionS("ras.end", ["true", this.SerialNumber, sucess, informationText, endTime])
             return await this.startObserver()
         } else {
             alert("O Rastreamento não será finalizado!!")
@@ -163,7 +262,7 @@ class RastPVI {
     }
 }
 
-class RastUtil {
+export class RastUtil {
 
     static ENABLED = "enabled"
     static DISABLED = "disabled"
@@ -176,14 +275,27 @@ class RastUtil {
         return sessionStorage.getItem("ExecCount") == null ? 0 : parseInt(sessionStorage.getItem("ExecCount"))
     }
 
+    /**
+     * Possibilita habilitar ou desabilitar de forma conveniente as validações do ITS 
+     * @param {String} user permite que o rastreamento seja iniciado e finalizado sem informar o operador
+     * @param {String} station permite que o rastreamento seja iniciado e finalizado sem informar a estação
+     * @param {String} map permite que o rastreamento seja iniciado e finalizado sem informar o mapa de eventos e onevento atual
+     * @param {String} script permite que o rastreamento seja iniciado e finalizado sem rodar o script de caminho apontado no ERP
+     * 
+     * # Exemplos
+     * 
+     * ```js
+     * RastUtil.setValidations(RastUtil.ENABLED, RastUtil.ENABLED, RastUtil.ENABLED, RastUtil.DISABLED)
+     * ```
+     */
     static setValidations(user, station, map, script) {
-        PVI.runInstructionS("rastreamento.setvalidations", [user, station, map, script])
+        FWLink.runInstructionS("rastreamento.setvalidations", [user, station, map, script])
     }
 
     static async setOperador(Operador = null) {
         return new Promise(async resolve => {
-            if (PVI.runInstructionS("ras.getuser", []) == "") {
-                
+            if (FWLink.runInstructionS("ras.getuser", []) == "") {
+
                 if (Operador != null && typeof Operador == "object") {
                     const Prompt = Operador.prompt
                     const Alert = Operador.alert
@@ -203,7 +315,7 @@ class RastUtil {
 
                 } else {
                     if (this.evalOperador(Operador)) {
-                        PVI.runInstructionS("ras.setuser", [Operador])
+                        FWLink.runInstructionS("ras.setuser", [Operador])
                         resolve()
 
                     } else {
@@ -266,6 +378,20 @@ class RastUtil {
         }
     }
 
+    /**
+     * Transfere o conteúdo de um ou mais relatorios de teste origem para um relatorio destino
+     * @param {Array} reportsFrom 
+     * @param {RelatorioTeste} toReport 
+     * 
+     * # Exemplos
+     * 
+     * ```js
+     * const mainReport = new RelatorioTeste()
+     * const myReport1 = new RelatorioTeste()
+     * const myReport2 = new RelatorioTeste()
+     * RastUtil.transferReport([myReport1, myReport2], mainReport)
+     * ```
+     */
     static transferReport(reportsFrom = [], toReport) {
         for (const report of reportsFrom) {
 
@@ -276,5 +402,28 @@ class RastUtil {
                 toReport.TesteFuncional.push(test)
             }
         }
+    }
+
+    /**
+     * Retorna o caminho da pasta do script que está sendo executado, baseado no HTML.
+     * @returns string
+     */
+    static getScriptPath() {
+        let pathC = location.pathname.slice(location.pathname.indexOf("C:/"), location.pathname.lastIndexOf("/"))
+        let pathI = location.pathname.slice(location.pathname.indexOf("I:/"), location.pathname.lastIndexOf("/"))
+
+        if (pathC.length > 0) {
+            return pathC
+        } else if (pathI.length > 0) {
+            return pathI
+        }
+    }
+
+    /**
+     * Retorna o caminho da pasta do PVI em execucao
+     * @returns string
+     */
+    static getPVIPath() {
+        return FWLink.runInstructionS("getpvipath", [])
     }
 }

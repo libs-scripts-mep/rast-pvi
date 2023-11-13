@@ -1,8 +1,13 @@
 /**
  * Classe que descreve um relatorio de teste
- * @class
+ * 
+ * # Exemplos
+ * ```js
+ * import RelatorioTeste from "../node_modules/@libs-scripts-mep/rast-pvi/relatorio-teste.js"
+ * const myReport = new RelatorioTeste()
+ * ```
  */
-class RelatorioTeste {
+export default class RelatorioTeste {
     /**
      * @constructs RelatorioTeste
      * @param {string} programa 
@@ -25,14 +30,18 @@ class RelatorioTeste {
 
     /**
      * Adiciona um teste funcional ao array de testes funcionais
-     * Exemplo:
-     * 
-     * AddTesteFuncional("COM", "Impossível comunicar", -1, true)
      * @memberof RelatorioTeste
      * @param {string} nome Nome do teste (utilizado na pesquisa. ex : E1, S1 ...)
      * @param {string} descricao Descrição do teste (string longa)
      * @param {number} codFalha Codigo de falha (-1 se nao tem)
      * @param {boolean} resultado True ou False
+     * 
+     * # Exemplos 
+     * 
+     * ```js
+     * const myReport = new RelatorioTeste()
+     * myReport.AddTesteFuncional("COM", "Impossível comunicar", -1, true)
+     * ```
      */
     AddTesteFuncional(nome, descricao, codFalha, resultado) {
         this.TesteFuncional.push({
@@ -45,18 +54,21 @@ class RelatorioTeste {
 
     /**
      * Adiciona um teste de componente ao array de testes de componentes
-     * Exemplo:
-     * 
-     * AddTesteComponente("VccVoltage", -1, 311.2,  311.0, 5, "G", -1, true)
-     * @memberof RelatorioTeste
-     * @param {string} nome Designator do componente (R1, T1 ...)
-     * @param {number} pino Numero do pino (-1 se não tem)
+     * @param {string} nome Nome do teste ou componente
+     * @param {number} pino Numero do pino (-1 se não houver)
      * @param {number} valorMedido Valor medido (com decimais)
      * @param {number} valorEsperado Valor de referência (com decimais)
      * @param {number} aceitacao Porcentagem de aceitação (+/-)
-     * @param {string} etapaMontagem Etapa do componente
-     * @param {number} codFalha Codigo de falha (-1 se nao tem)
+     * @param {string} etapaMontagem Etapa de montagem do componente no produto
+     * @param {number} codFalha Codigo de falha (-1 se não houver)
      * @param {boolean} resultado True ou False
+     * 
+     * # Exemplos 
+     * 
+     * ```js
+     * const myReport = new RelatorioTeste()
+     * myReport.AddTesteComponente("VccVoltage", -1, 311.2,  311.0, 5, "G", -1, true)
+     * ```
      */
     AddTesteComponente(nome, pino, valorMedido, valorEsperado, aceitacao, etapaMontagem, codFalha, resultado) {
         this.TesteComponentes.push({
@@ -74,6 +86,13 @@ class RelatorioTeste {
     /**
      * Ordena alfabeticamente os testes funcionais e de componentes existentes em uma instancia de um RelatorioTeste
      * @param {RelatorioTeste} relatorio 
+     * 
+     * # Exemplos 
+     * 
+     * ```js
+     * const myReport = new RelatorioTeste()
+     * RelatorioTeste.OrdenaRelatorio(myReport)
+     * ```
      */
     static OrdenaRelatorio(relatorio) {
 

@@ -426,4 +426,6 @@ export class RastUtil {
     static getPVIPath() {
         return FWLink.runInstructionS("getpvipath", [])
     }
+
+    static { window.RastUtil = RastUtil }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@libs-scripts-mep/rast-pvi",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Biblioteca que manipula eventos de rastreamento através do PVI",
   "main": "rast-pvi.js",
   "scripts": {

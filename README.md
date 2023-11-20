@@ -27,16 +27,7 @@ npm uninstall @libs-scripts-mep/rast-pvi
 
 ## Controle de fluxo
 
-O controle de fluxo serve para impedir que uma peça seja retestada se já tiver erro apontado no rast, para retestar é necessário um apontamento de conserto, ou se a mesma já possuir apontamento de sucesso, não será retestada sem um apontamento de revisão.
-A partir da versão 4.7.0.0 do PVI, ele é capaz de controlar o fluxo do processo. Para habilitar é necessário mandar uma variável do tipo `boolean` como parametro, veja o exemplo abaixo:
-
-``` javascript
-// variavel que habilita o controle de fluxo a partir do PVI, 'true' para habilitado
-const fluxControl = true
-const rastInitSucess = await this.Rast.init(fluxControl)
-```
-
-> o método atribui por default o valor `false` à essa variável, então não se preocupe caso não for utilizar
+> Obsoleto
 
 
 ## Crontrole de finalização do rastreamento

@@ -197,8 +197,8 @@ export class RastPVI {
      * 1000001234567** ou **1000001234567
      * ```
      */
-    async init(fluxControl = false, program = "", startTime = "") {
-        FWLink.runInstructionS("ras.init", ["true", this.SerialNumber, this.EventMap.join(";"), this.Event, program, startTime, fluxControl])
+    async init(program = "", startTime = "") {
+        FWLink.runInstructionS("ras.init", ["true", this.SerialNumber, this.EventMap.join(";"), this.Event, program, startTime])
         return await this.startObserver()
     }
 

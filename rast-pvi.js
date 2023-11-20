@@ -166,7 +166,6 @@ export class RastPVI {
 
     /**
      * 
-     * @param {Boolean} fluxControl Impede que uma peça seja retestada se já tiver erro apontado. Para retestar é necessário um apontamento de conserto, ou se a mesma já possuir apontamento de sucesso, não será retestada sem um apontamento de revisão. Funciona a partir do PVI `4.7.0.0`
      * @param {String} program 
      * @param {String} startTime 
      * @returns Boolean

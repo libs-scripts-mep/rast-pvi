@@ -1,3 +1,4 @@
+import RelatorioTeste from "../rast-pvi/relatorio-teste.js"
 import FWLink from "../daq-fwlink/FWLink.js"
 
 /**
@@ -392,13 +393,21 @@ export class RastUtil {
      * ```
      */
     static transferReport(reportsFrom = [], toReport) {
-        for (const report of reportsFrom) {
 
-            for (const test of report.TesteComponentes) {
-                toReport.TesteComponentes.push(test)
-            }
-            for (const test of report.TesteFuncional) {
-                toReport.TesteFuncional.push(test)
+        if (toReport == undefined || !toReport instanceof RelatorioTeste) {
+            throw new Error(`Falha ao transferir relatórios: '${toReport}' não é uma instância de 'RelatorioTeste'`)
+        }
+
+        for (const report of reportsFrom) {
+            if (report != undefined && report instanceof RelatorioTeste) {
+                for (const test of report.TesteComponentes) {
+                    toReport.TesteComponentes.push(test)
+                }
+                for (const test of report.TesteFuncional) {
+                    toReport.TesteFuncional.push(test)
+                }
+            } else {
+                throw new Error(`Falha ao transferir relatórios: '${report}' não é uma instância de 'RelatorioTeste'`)
             }
         }
     }

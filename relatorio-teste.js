@@ -107,10 +107,10 @@ export default class RelatorioTeste {
         })
 
         relatorio.TesteComponentes.sort((a, b) => {
-            if (a.Nome < b.Nome) {
+            if (a.Designator < b.Designator) {
                 return -1
             }
-            if (a.Nome > b.Nome) {
+            if (a.Designator > b.Designator) {
                 return 1
             }
             return 0

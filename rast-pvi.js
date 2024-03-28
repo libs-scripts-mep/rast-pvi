@@ -124,45 +124,49 @@ export class RastPVI {
         })
     }
 
-    async setSerialNumber(serialNumber = null) {
-        if (serialNumber != null && typeof serialNumber == "object") {
-            const Prompt = serialNumber.prompt
-            const Alert = serialNumber.alert
+    async setSerialNumber(serialNumber = null, allowCancel = false) {
+        return new Promise(async (resolve, reject) => {
 
-            const number = await Prompt.Method.apply(Prompt.Instance, Prompt.Parameters)
-            if (number.result) {
-                if (RastUtil.evalSerialNumber(number.value)) {
-                    this.setSerialNumber(number.value)
-                } else {
-                    await Alert.Method.apply(Alert.Instance, Alert.Parameters)
-                    return this.setSerialNumber(serialNumber)
-                }
-            } else {
-                await Alert.Method.apply(Alert.Instance, Alert.Parameters)
-                return this.setSerialNumber(serialNumber)
-            }
+            if (serialNumber != null && typeof serialNumber == "object") {
+                const Prompt = serialNumber.prompt
+                const Alert = serialNumber.alert
 
-        } else {
-            if (serialNumber != null && RastUtil.evalSerialNumber(serialNumber)) {
-                if (serialNumber.includes("**")) {
-                    serialNumber = serialNumber.replace("**", "")
-                    this.SendTracking = false
-                }
-                this.SerialNumber = serialNumber
-                return
-            } else {
-                return new Promise(async (resolve) => {
-                    const number = prompt("Informe o número de serie do produto.")
-
-                    if (RastUtil.evalSerialNumber(number)) {
-                        resolve(this.setSerialNumber(number))
+                const number = await Prompt.Method.apply(Prompt.Instance, Prompt.Parameters)
+                if (number.result) {
+                    if (RastUtil.evalSerialNumber(number.value)) {
+                        return resolve(this.setSerialNumber(number.value))
                     } else {
-                        alert("O valor informado não é um número de série!")
-                        resolve(this.setSerialNumber())
+                        await Alert.Method.apply(Alert.Instance, Alert.Parameters)
+                        return resolve(this.setSerialNumber(serialNumber))
                     }
-                })
+                } else {
+                    if (allowCancel) { return resolve(false) }
+                    await Alert.Method.apply(Alert.Instance, Alert.Parameters)
+                    return resolve(this.setSerialNumber(serialNumber))
+                }
+
+            } else {
+                if (serialNumber != null && RastUtil.evalSerialNumber(serialNumber)) {
+                    if (serialNumber.includes("**")) {
+                        serialNumber = serialNumber.replace("**", "")
+                        this.SendTracking = false
+                    }
+                    this.SerialNumber = serialNumber
+                    return resolve(true)
+                } else {
+                    return new Promise(async (resolve) => {
+                        const number = prompt("Informe o número de serie do produto.")
+
+                        if (RastUtil.evalSerialNumber(number)) {
+                            resolve(this.setSerialNumber(number))
+                        } else {
+                            alert("O valor informado não é um número de série!")
+                            resolve(this.setSerialNumber())
+                        }
+                    })
+                }
             }
-        }
+        })
     }
 
     /**

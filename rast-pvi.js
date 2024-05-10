@@ -154,16 +154,14 @@ export class RastPVI {
                     this.SerialNumber = serialNumber
                     return resolve(true)
                 } else {
-                    return new Promise(async (resolve) => {
-                        const number = prompt("Informe o número de serie do produto.")
+                    const number = prompt("Informe o número de serie do produto.")
 
-                        if (RastUtil.evalSerialNumber(number)) {
-                            resolve(this.setSerialNumber(number))
-                        } else {
-                            alert("O valor informado não é um número de série!")
-                            resolve(this.setSerialNumber())
-                        }
-                    })
+                    if (RastUtil.evalSerialNumber(number)) {
+                        resolve(this.setSerialNumber(number))
+                    } else {
+                        alert("O valor informado não é um número de série!")
+                        resolve(this.setSerialNumber())
+                    }
                 }
             }
         })

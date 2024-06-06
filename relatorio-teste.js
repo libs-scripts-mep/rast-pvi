@@ -117,3 +117,6 @@ export default class RelatorioTeste {
         })
     }
 }
+
+export const globalReport = new RelatorioTeste()
+window.globalReport = globalReport

@@ -294,42 +294,33 @@ export class RastUtil {
         FWLink.runInstructionS("rastreamento.setvalidations", [user, station, map, script])
     }
 
-    static async setOperador(Operador = null) {
+    static async setOperador(UIObject = null) {
         return new Promise(async resolve => {
             if (FWLink.runInstructionS("ras.getuser", []) == "") {
 
-                if (Operador != null && typeof Operador == "object") {
-                    const Prompt = Operador.prompt
-                    const Alert = Operador.alert
+                if (UIObject != null && typeof UIObject == "object") {
+                    const Prompt = UIObject.prompt
+                    const Alert = UIObject.alert
 
                     const operador = await Prompt.Method.apply(Prompt.Instance, Prompt.Parameters)
                     if (operador.result) {
-                        if (this.evalOperador(operador.value)) {
-                            resolve(this.setOperador(operador.value))
-                        } else {
+
+                        if (FWLink.runInstructionS("ras.setuser", [operador.value]) != "1") {
                             await Alert.Method.apply(Alert.Instance, Alert.Parameters)
-                            resolve(this.setOperador(Operador))
                         }
+                        resolve(this.setOperador(UIObject))
+
                     } else {
                         await Alert.Method.apply(Alert.Instance, Alert.Parameters)
-                        resolve(this.setOperador(Operador))
+                        resolve(this.setOperador(UIObject))
                     }
 
                 } else {
-                    if (this.evalOperador(Operador)) {
-                        FWLink.runInstructionS("ras.setuser", [Operador])
-                        resolve()
-
-                    } else {
-                        const operador = prompt("Informe o Número do Cracha")
-
-                        if (this.evalOperador(operador)) {
-                            resolve(this.setOperador(operador))
-                        } else {
-                            alert("O valor informado não é um número!")
-                            resolve(this.setOperador())
-                        }
+                    const operador = prompt("Informe o Número do Cracha")
+                    if (FWLink.runInstructionS("ras.setuser", [operador]) != "1") {
+                        alert("Número de usuário inválido")
                     }
+                    resolve(this.setOperador())
                 }
 
             } else {

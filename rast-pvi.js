@@ -45,7 +45,7 @@ export class RastPVI {
         if (sessionStorage.getItem("TestComponents") == null) {
             const responseObj = this.setTestComponents(componentsToEval)
 
-            if (responseObj.sucess) { sessionStorage.setItem("TestComponents", JSON.stringify(responseObj.response)) }
+            if (responseObj.success) { sessionStorage.setItem("TestComponents", JSON.stringify(responseObj.response)) }
             else { throw new Error(responseObj.message) }
         }
 
@@ -66,14 +66,14 @@ export class RastPVI {
 
             const getResult = evalComponent(component[objIndex].regex, component[objIndex].message)
 
-            if (getResult.sucess) {
+            if (getResult.success) {
                 responseObj[component[nameIndex]] = getResult.component
             } else {
-                return { sucess: false, response: responseObj, message: `${component[nameIndex]} incompatível com o solicitado` }
+                return { success: false, response: responseObj, message: `${component[nameIndex]} incompatível com o solicitado` }
             }
         }
 
-        return { sucess: true, response: responseObj, message: `` }
+        return { success: true, response: responseObj, message: `` }
 
         function evalComponent(regex, message) {
             const input = prompt(message)
@@ -82,13 +82,13 @@ export class RastPVI {
                 const component = input.match(regex)
 
                 if (component != null) {
-                    return { sucess: true, component: component[0].toUpperCase() }
+                    return { success: true, component: component[0].toUpperCase() }
                 } else {
-                    return { sucess: false, component: null }
+                    return { success: false, component: null }
                 }
 
             } else {
-                return { sucess: false, component: input }
+                return { success: false, component: input }
             }
         }
     }
@@ -124,45 +124,35 @@ export class RastPVI {
         })
     }
 
-    async setSerialNumber(serialNumber = null, allowCancel = false) {
-        return new Promise(async (resolve, reject) => {
+    async setSerialNumber(UIObject = null, allowCancel = false) {
+        return new Promise(async (resolve) => {
 
-            if (serialNumber != null && typeof serialNumber == "object") {
-                const Prompt = serialNumber.prompt
-                const Alert = serialNumber.alert
+            if (UIObject != null && typeof UIObject == "object") {
+                const Prompt = UIObject.prompt
+                const Alert = UIObject.alert
 
                 const number = await Prompt.Method.apply(Prompt.Instance, Prompt.Parameters)
                 if (number.result) {
-                    if (RastUtil.evalSerialNumber(number.value)) {
-                        return resolve(this.setSerialNumber(number.value))
-                    } else {
-                        await Alert.Method.apply(Alert.Instance, Alert.Parameters)
-                        return resolve(this.setSerialNumber(serialNumber))
+                    if (number.value.includes("**")) {
+                        number.value = number.value.replace("**", "")
+                        this.SendTracking = false
                     }
+                    this.SerialNumber = number.value
+                    return resolve(true)
                 } else {
                     if (allowCancel) { return resolve(false) }
                     await Alert.Method.apply(Alert.Instance, Alert.Parameters)
-                    return resolve(this.setSerialNumber(serialNumber))
+                    return resolve(this.setSerialNumber(UIObject))
                 }
 
             } else {
-                if (serialNumber != null && RastUtil.evalSerialNumber(serialNumber)) {
-                    if (serialNumber.includes("**")) {
-                        serialNumber = serialNumber.replace("**", "")
-                        this.SendTracking = false
-                    }
-                    this.SerialNumber = serialNumber
-                    return resolve(true)
-                } else {
-                    const number = prompt("Informe o número de serie do produto.")
-
-                    if (RastUtil.evalSerialNumber(number)) {
-                        resolve(this.setSerialNumber(number))
-                    } else {
-                        alert("O valor informado não é um número de série!")
-                        resolve(this.setSerialNumber())
-                    }
+                const number = prompt("Informe o número de serie do produto.")
+                if (number.includes("**")) {
+                    number = number.replace("**", "")
+                    this.SendTracking = false
                 }
+                this.SerialNumber = number
+                return resolve(true)
             }
         })
     }
@@ -177,7 +167,7 @@ export class RastPVI {
      * 
      * ```js
      * import { RastPVI, RastUtil } from "../node_modules/@libs-scripts-mep/rast-pvi/rast-pvi.js"
-     * const rastInitSucess = await rast.init(true)
+     * const rastInitsuccess = await rast.init(true)
      * ```
      * 
      * ## Algoritmo recomendado
@@ -188,8 +178,8 @@ export class RastPVI {
      * RastUtil.setValidations(RastUtil.ENABLED, RastUtil.ENABLED, RastUtil.ENABLED, RastUtil.DISABLED)
      * await RastUtil.setOperador()
      * await rast.setSerialNumber()
-     * const rastInitSucess = await rast.init(true)
-     * if (!rastInitSucess) { tempReport.AddTesteFuncional("Rastreamento Init", rast.InitInfo.Message, -1, false) }
+     * const rastInitsuccess = await rast.init(true)
+     * if (!rastInitsuccess) { tempReport.AddTesteFuncional("Rastreamento Init", rast.InitInfo.Message, -1, false) }
      * ```
      * 
      * ## 💡 Controle de finalização de rastreamento
@@ -223,7 +213,7 @@ export class RastPVI {
 
     /**
      * 
-     * @param {Boolean} sucess 
+     * @param {Boolean} success 
      * @param {String} endTime 
      * @returns Boolean
      * 
@@ -242,7 +232,7 @@ export class RastPVI {
      * rast.end(RastUtil.evalReport(myReport))
      * ```
      */
-    async end(sucess, endTime = "") {
+    async end(success, endTime = "") {
         let informationText = ""
         let splitterCount = 0
 
@@ -255,7 +245,7 @@ export class RastPVI {
         })
 
         if (this.SendTracking) {
-            FWLink.runInstructionS("ras.end", ["true", this.SerialNumber, sucess, informationText, endTime])
+            FWLink.runInstructionS("ras.end", ["true", this.SerialNumber, success, informationText, endTime])
             return await this.startObserver()
         } else {
             alert("O Rastreamento não será finalizado!!")
@@ -335,40 +325,24 @@ export class RastUtil {
      * @returns [true] se nao houver falha, [false] se houver.
      */
     static evalReport(report) {
-        let sucess = null
+        let success = null
 
         if (report.TesteFuncional.length != 0 || report.TesteComponentes.length != 0) {
 
-            sucess = true
+            success = true
 
             report.TesteFuncional.forEach((teste) => {
                 if (!teste.Resultado) {
-                    sucess = false
+                    success = false
                 }
             })
             report.TesteComponentes.forEach((teste) => {
                 if (!teste.Resultado) {
-                    sucess = false
+                    success = false
                 }
             })
         }
-        return sucess
-    }
-
-    static evalSerialNumber(serialNumber) {
-        if (serialNumber != null && serialNumber.match(/[1][0][0][0][0-9]{8}/) != null) {
-            return true
-        } else {
-            return false
-        }
-    }
-
-    static evalOperador(operador) {
-        if (!isNaN(operador) && operador != null && operador != "") {
-            return true
-        } else {
-            return false
-        }
+        return success
     }
 
     /**

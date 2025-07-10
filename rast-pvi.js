@@ -136,7 +136,7 @@ class RastPVI {
 
         if (message.includes("rastreamento.init")) {
 
-            let ns = message.match(/[1][0]{4}[0-9]{8}/)
+            let ns = message.match(/[1][0-9]{9,12}/)
 
             if (sessionStorage.getItem("SerialNumber") == ns) {
 
@@ -147,7 +147,7 @@ class RastPVI {
 
         if (message.includes("rastreamento.end")) {
 
-            let ns = message.match(/[1][0]{4}[0-9]{8}/)
+            let ns = message.match(/[1][0-9]{9,12}/)
 
             if (sessionStorage.getItem("SerialNumber") == ns) {
 

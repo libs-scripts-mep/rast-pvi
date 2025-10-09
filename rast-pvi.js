@@ -77,7 +77,7 @@ class RastPVI {
         let serialCode = prompt("Informe o número de serie do produto.")
 
         if (serialCode != null) {
-            if (serialCode.match(/[1][0][0][0][0-9]{8}/) != null) {
+            if (serialCode.match(/[1][0-9]{9,12}/) != null) {
                 callback(true, serialCode)
             } else {
                 callback(false)
